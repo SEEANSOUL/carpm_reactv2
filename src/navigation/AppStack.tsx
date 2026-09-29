@@ -15,6 +15,9 @@ import { UserGarageScreen } from '../screens/UserGarageScreen';
 import { NotificationsScreen } from '../screens/NotificationsScreen';
 import { ArenaScreen } from '../screens/ArenaScreen';
 import { ArenaLeaderboardScreen } from '../screens/ArenaLeaderboardScreen';
+import { DriveHistoryScreen } from '../screens/DriveHistoryScreen';
+import { DriveLogDetailScreen } from '../screens/DriveLogDetailScreen';
+import type { DriveLog } from '../types/models';
 import { colors } from '../theme/colors';
 
 export type AppStackParamList = {
@@ -31,6 +34,8 @@ export type AppStackParamList = {
   Notifications: undefined;
   Arena: undefined;
   ArenaLeaderboard: undefined;
+  DriveHistory: undefined;
+  DriveLogDetail: { log: DriveLog };
 };
 
 const Stack = createNativeStackNavigator<AppStackParamList>();
@@ -79,6 +84,16 @@ export function AppStack() {
       <Stack.Screen
         name="ArenaLeaderboard"
         component={ArenaLeaderboardScreen}
+        options={{ presentation: 'card' }}
+      />
+      <Stack.Screen
+        name="DriveHistory"
+        component={DriveHistoryScreen}
+        options={{ presentation: 'card' }}
+      />
+      <Stack.Screen
+        name="DriveLogDetail"
+        component={DriveLogDetailScreen}
         options={{ presentation: 'card' }}
       />
     </Stack.Navigator>

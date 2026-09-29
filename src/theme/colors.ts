@@ -17,6 +17,9 @@ export const colors = {
   black: '#000000',
   overlay: 'rgba(0,0,0,0.55)',
   live: '#FF2D2D',
+  drive: '#E10600',
+  driveTerracotta: '#FF2D2D',
+  driveCharcoal: '#000000',
 };
 
 export const spacing = {

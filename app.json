@@ -20,7 +20,10 @@
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "CaRPM profil, araç ve shot medyası yüklemek için galeri erişimi ister.",
         "NSCameraUsageDescription": "CaRPM fotoğraf ve video çekmek için kamera erişimi ister.",
-        "NSMicrophoneUsageDescription": "CaRPM shot videosu kaydı için mikrofon erişimi ister."
+        "NSMicrophoneUsageDescription": "CaRPM shot videosu kaydı için mikrofon erişimi ister.",
+        "NSLocationWhenInUseUsageDescription": "CaRPM sürüş rotanı kaydetmek için konumunu kullanır.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "CaRPM sürüş sırasında uygulamayı kapatsan da rotayı kaydetmeye devam eder.",
+        "NSLocationAlwaysUsageDescription": "CaRPM sürüş sırasında uygulamayı kapatsan da rotayı kaydetmeye devam eder."
       }
     },
     "androidStatusBar": {
@@ -48,7 +51,12 @@
         "android.permission.READ_MEDIA_VIDEO",
         "android.permission.POST_NOTIFICATIONS",
         "android.permission.RECEIVE_BOOT_COMPLETED",
-        "android.permission.VIBRATE"
+        "android.permission.VIBRATE",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION"
       ]
     },
     "web": {
@@ -76,7 +84,16 @@
           "defaultChannel": "carpm_default"
         }
       ],
-      "expo-video"
+      "expo-video",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "CaRPM sürüş rotanı kaydetmek için konumunu kullanır.",
+          "locationAlwaysAndWhenInUsePermission": "CaRPM sürüş sırasında uygulamayı kapatsan da rotayı kaydetmeye devam eder.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true
+        }
+      ]
     ],
     "extra": {
       "supabaseUrl": "",

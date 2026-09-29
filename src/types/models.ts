@@ -105,6 +105,8 @@ export type Vehicle = {
   exhaust_db: number | null;
   last_dyno_at: string | null;
   is_active: boolean;
+  fuel_l_per_100km?: number | null;
+  fuel_price_try?: number | null;
   badges: string[];
   mods?: string[];
   arena_score?: number;
@@ -153,6 +155,30 @@ export type Shot = {
   creator?: Profile | null;
   vehicle?: Vehicle | null;
   club?: Club | null;
+};
+
+export type DriveRoutePoint = {
+  latitude: number;
+  longitude: number;
+};
+
+export type DriveLog = {
+  id: string;
+  user_id: string;
+  started_at: string;
+  ended_at: string;
+  total_distance_km: number;
+  max_speed_kmh: number;
+  average_speed_kmh: number;
+  duration_seconds: number;
+  route: DriveRoutePoint[];
+  created_at: string;
+  vehicle_id?: string | null;
+  vehicle_label?: string | null;
+  vehicle_image_url?: string | null;
+  fuel_liters?: number | null;
+  fuel_cost_try?: number | null;
+  fuel_l_per_100km?: number | null;
 };
 
 export type AppNotification = {

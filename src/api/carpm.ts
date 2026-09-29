@@ -1,3 +1,4 @@
+import { fuelCostTry, fuelLiters } from '../lib/driveFormat';
 import { requireSupabase } from '../lib/supabase';
 import { mapAuthError } from '../lib/authErrors';
 import type { FeedTab } from '../lib/feedAlgorithm';
@@ -18,6 +19,7 @@ import type {
   Vehicle,
   AppNotification,
   ClubPostReply,
+  DriveLog,
 } from '../types/models';
 
 export type { FeedTab };
@@ -199,6 +201,8 @@ export async function updateVehicle(
     is_active: boolean;
     badges: string[];
     garage_number: number | null;
+    fuel_l_per_100km: number | null;
+    fuel_price_try: number | null;
   }>,
 ): Promise<Vehicle> {
   const client = requireSupabase();
@@ -1432,4 +1436,167 @@ export async function batchSubmitArenaVotes(votes: ArenaVotePayload[]): Promise<
   });
   if (error) throw new Error(mapAuthError(error));
   return (data as number) ?? 0;
+}
+
+function downsampleRoute<T>(points: T[], maxPoints = 800): T[] {
+  if (points.length <= maxPoints) return points;
+  const step = points.length / maxPoints;
+  const result: T[] = [];
+  for (let i = 0; i < maxPoints; i += 1) {
+    result.push(points[Math.floor(i * step)]);
+  }
+  const last = points[points.length - 1];
+  if (result[result.length - 1] !== last) result.push(last);
+  return result;
+}
+
+function mapDriveLog(row: Record<string, unknown>): DriveLog {
+  const raw = row.route;
+  const route = Array.isArray(raw)
+    ? raw
+        .map((point) => {
+          if (!point || typeof point !== 'object') return null;
+          const latitude = Number((point as { latitude?: unknown }).latitude);
+          const longitude = Number((point as { longitude?: unknown }).longitude);
+          if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+          return { latitude, longitude };
+        })
+        .filter((point): point is DriveLog['route'][number] => point != null)
+    : [];
+
+  return {
+    id: String(row.id),
+    user_id: String(row.user_id),
+    started_at: String(row.started_at),
+    ended_at: String(row.ended_at),
+    total_distance_km: Number(row.total_distance_km) || 0,
+    max_speed_kmh: Number(row.max_speed_kmh) || 0,
+    average_speed_kmh: Number(row.average_speed_kmh) || 0,
+    duration_seconds: Number(row.duration_seconds) || 0,
+    route,
+    created_at: String(row.created_at),
+    vehicle_id: row.vehicle_id ? String(row.vehicle_id) : null,
+    vehicle_label: row.vehicle_label ? String(row.vehicle_label) : null,
+    vehicle_image_url: row.vehicle_image_url ? String(row.vehicle_image_url) : null,
+    fuel_liters: row.fuel_liters == null ? null : Number(row.fuel_liters) || 0,
+    fuel_cost_try: row.fuel_cost_try == null ? null : Number(row.fuel_cost_try) || 0,
+    fuel_l_per_100km: row.fuel_l_per_100km == null ? null : Number(row.fuel_l_per_100km) || 0,
+  };
+}
+
+const DRIVE_LOG_COLUMNS =
+  'id, user_id, started_at, ended_at, total_distance_km, max_speed_kmh, average_speed_kmh, duration_seconds, route, created_at, vehicle_id, vehicle_label, vehicle_image_url, fuel_liters, fuel_cost_try, fuel_l_per_100km';
+const DRIVE_LOG_COLUMNS_BASE =
+  'id, user_id, started_at, ended_at, total_distance_km, max_speed_kmh, average_speed_kmh, duration_seconds, route, created_at';
+
+export async function fetchMyDriveLogs(userId: string): Promise<DriveLog[]> {
+  const client = requireSupabase();
+  const first = await client
+    .from('drive_logs')
+    .select(DRIVE_LOG_COLUMNS)
+    .eq('user_id', userId)
+    .order('ended_at', { ascending: false })
+    .limit(30);
+  const query =
+    first.error && /column|schema cache/i.test(first.error.message)
+      ? await client
+          .from('drive_logs')
+          .select(DRIVE_LOG_COLUMNS_BASE)
+          .eq('user_id', userId)
+          .order('ended_at', { ascending: false })
+          .limit(30)
+      : first;
+  if (query.error) throw new Error(mapAuthError(query.error));
+  return (query.data ?? []).map((row) => mapDriveLog(row as Record<string, unknown>));
+}
+
+export async function saveDriveLog(
+  userId: string,
+  session: {
+    startedAt: string;
+    endedAt: string;
+    totalDistanceKm: number;
+    maxSpeedKmh: number;
+    averageSpeedKmh: number;
+    durationSeconds: number;
+    route: { latitude: number; longitude: number }[];
+    vehicle?: {
+      id: string;
+      label: string;
+      imageUrl?: string | null;
+      lPer100km: number;
+      priceTry: number;
+    } | null;
+  },
+): Promise<string> {
+  if (session.route.length < 2 || session.totalDistanceKm < 0.05) {
+    throw new Error('Bu sürüş kaydedilemeyecek kadar kısa. Biraz daha yol al.');
+  }
+
+  const client = requireSupabase();
+  const route = downsampleRoute(session.route).map((point) => ({
+    latitude: Number(point.latitude.toFixed(6)),
+    longitude: Number(point.longitude.toFixed(6)),
+  }));
+
+  const vehicle = session.vehicle;
+  const liters = vehicle ? fuelLiters(session.totalDistanceKm, vehicle.lPer100km) : 0;
+  const cost = vehicle ? fuelCostTry(liters, vehicle.priceTry) : 0;
+  const base = {
+    user_id: userId,
+    started_at: session.startedAt,
+    ended_at: session.endedAt,
+    total_distance_km: Number(session.totalDistanceKm.toFixed(3)),
+    max_speed_kmh: Number(session.maxSpeedKmh.toFixed(1)),
+    average_speed_kmh: Number(session.averageSpeedKmh.toFixed(1)),
+    duration_seconds: session.durationSeconds,
+    route,
+  };
+  const withFuel = vehicle
+    ? {
+        ...base,
+        vehicle_id: vehicle.id,
+        vehicle_label: vehicle.label,
+        vehicle_image_url: vehicle.imageUrl ?? null,
+        fuel_liters: Number(liters.toFixed(3)),
+        fuel_cost_try: Number(cost.toFixed(2)),
+        fuel_l_per_100km: Number(vehicle.lPer100km.toFixed(2)),
+      }
+    : base;
+
+  let inserted = await client.from('drive_logs').insert(withFuel).select('id').single();
+  if (inserted.error && vehicle && /column|schema cache/i.test(inserted.error.message)) {
+    inserted = await client.from('drive_logs').insert(base).select('id').single();
+  }
+  if (inserted.error) throw new Error(mapAuthError(inserted.error));
+  const driveId = String(inserted.data.id);
+
+  if (vehicle && cost > 0) {
+    const expense = await client.from('vehicle_expenses').insert({
+      user_id: userId,
+      vehicle_id: vehicle.id,
+      drive_log_id: driveId,
+      kind: 'yakit',
+      title: 'Yakıt',
+      amount_try: Number(cost.toFixed(2)),
+      liters: Number(liters.toFixed(3)),
+      distance_km: Number(session.totalDistanceKm.toFixed(3)),
+      note: `${vehicle.label} · ${vehicle.lPer100km.toFixed(1)} L/100 km`,
+      spent_at: session.endedAt,
+    });
+    // Masraf tablosu yoksa sürüş kaydı yine geçerlidir.
+    void expense.error;
+  }
+
+  return driveId;
+}
+
+export async function deleteDriveLog(logId: string, userId: string): Promise<void> {
+  const client = requireSupabase();
+  const { error } = await client
+    .from('drive_logs')
+    .delete()
+    .eq('id', logId)
+    .eq('user_id', userId);
+  if (error) throw new Error(mapAuthError(error));
 }

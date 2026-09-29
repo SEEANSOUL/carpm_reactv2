@@ -7,6 +7,7 @@ import { ShotsScreen } from '../screens/ShotsScreen';
 import { ClubsScreen } from '../screens/ClubsScreen';
 import { CreateShotScreen } from '../screens/CreateShotScreen';
 import { GarageScreen } from '../screens/GarageScreen';
+import { LiveDriveScreen } from '../screens/LiveDriveScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { useExitConfirm } from '../hooks/useExitConfirm';
 import { colors } from '../theme/colors';
@@ -16,6 +17,7 @@ export type RootTabParamList = {
   Clubs: undefined;
   Create: undefined;
   Garage: undefined;
+  Drive: undefined;
   Profile: undefined;
 };
 
@@ -132,6 +134,19 @@ export function RootTabs() {
         }}
       />
       <Tab.Screen
+        name="Drive"
+        component={LiveDriveScreen}
+        options={{
+          tabBarIcon: ({ focused }) => (
+            <TabIcon
+              name={focused ? 'navigate' : 'navigate-outline'}
+              label="SÜRÜŞ"
+              focused={focused}
+            />
+          ),
+        }}
+      />
+      <Tab.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
@@ -154,7 +169,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 1,
     top: 8,
-    minWidth: 64,
+    minWidth: 48,
   },
   tabLabel: {
     color: colors.textDim,

@@ -9,6 +9,7 @@ React Native (Expo) + Supabase — otomobil & motosiklet topluluk uygulaması.
 - **Paylaş** — shot oluşturma (araç, telemetri, kulüp hedefi, audio)
 - **Garajım** — araç vitrini
 - **Profil** — rozetler, garaj, shots grid
+- **Sürüş** — canlı GPS, yerel telemetri, bitince tek kayıt
 
 ## Kurulum
 
@@ -45,6 +46,7 @@ SQL yamaları:
 7. `supabase/club_membership_approval.sql` ← **kulüp katılım onayı (kurucu)**
 8. `supabase/push_notifications.sql` ← **uygulama dışı Expo push (zorunlu)**
 9. `supabase/admin.sql` ← admin panel (opsiyonel)
+10. `supabase/drive_logs.sql` ← **sürüş takibi (yalnızca sahip okur, tek insert)**
 
 ### Push bildirimleri (uygulama dışı)
 

@@ -189,6 +189,7 @@ export function ProfileScreen() {
               <Ionicons name="log-out-outline" size={18} color={colors.accent} />
             </Pressable>
           </View>
+
         </View>
 
         <Text style={styles.sectionTitle}>SÜRÜCÜ ROZETLERİ</Text>

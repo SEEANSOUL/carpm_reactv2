@@ -163,9 +163,10 @@ function ShotSlide({
     shot.thumbnail_url ||
     (!video ? shot.video_url : null);
 
+  const speedMax = shot.speed_max != null && shot.speed_max > 0 ? shot.speed_max : null;
   const showHud =
     highlightDyno ||
-    shot.speed_max != null ||
+    speedMax != null ||
     shot.boost_bar != null ||
     shot.rpm_max != null ||
     shot.dyno_whp != null ||
@@ -250,15 +251,15 @@ function ShotSlide({
               <View style={styles.telemetry} pointerEvents="none">
                 {shot.dyno_whp != null ? (
                   <Text style={styles.speed}>{shot.dyno_whp} WHP</Text>
-                ) : shot.speed_max != null ? (
-                  <Text style={styles.speed}>{shot.speed_max} KM/H</Text>
+                ) : speedMax != null ? (
+                  <Text style={styles.speed}>{speedMax} KM/H</Text>
                 ) : shot.zero_to_hundred != null ? (
                   <Text style={styles.speed}>{shot.zero_to_hundred}s</Text>
                 ) : null}
                 <View style={styles.gaugeRow}>
-                  {shot.dyno_whp != null && shot.speed_max != null ? (
+                  {shot.dyno_whp != null && speedMax != null ? (
                     <View style={styles.gaugePill}>
-                      <Text style={styles.gaugeText}>{shot.speed_max} KM/H</Text>
+                      <Text style={styles.gaugeText}>{speedMax} KM/H</Text>
                     </View>
                   ) : null}
                   {shot.zero_to_hundred != null && shot.dyno_whp != null ? (
